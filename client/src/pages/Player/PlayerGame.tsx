@@ -125,13 +125,15 @@ export const PlayerGame: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-4 mt-auto">
-            <span className="text-center font-bold text-[var(--color-ink-faint)] text-sm">Rate this pitch (1-10)</span>
-            <div className="grid grid-cols-5 gap-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(score => (
+            <span className="text-center font-bold text-[var(--color-ink-soft)] text-sm uppercase tracking-wider">
+              Rate this pitch (1-10)
+            </span>
+            <div className="grid grid-cols-5 gap-3">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
                 <button
                   key={score}
                   onClick={() => submitVote(score)}
-                  className="aspect-square rounded-xl bg-white text-[var(--color-ink)] font-display font-bold text-xl shadow-sm border-b-4 border-[var(--color-line)] hover:-translate-y-1 hover:border-b-8 active:translate-y-1 active:border-b-0 transition-all flex items-center justify-center"
+                  className="aspect-square rounded-2xl bg-white/10 hover:bg-[var(--color-volt)] text-white font-display font-extrabold text-2xl border-2 border-white/20 hover:border-[var(--color-volt)] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
                 >
                   {score}
                 </button>
