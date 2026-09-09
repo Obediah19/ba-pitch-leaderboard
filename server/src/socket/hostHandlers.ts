@@ -64,10 +64,10 @@ export function registerHostHandlers(io: Server, socket: Socket, roomManager: Ro
     }
   });
 
-  socket.on('host:open_poll', ({ roomCode, participantId }) => {
+  socket.on('host:open_poll', ({ roomCode, participantId, durationSeconds }) => {
     const room = roomManager.getRoom(roomCode);
     if (!room || room.hostSocketId !== socket.id) return;
-    roomManager.openPoll(roomCode, participantId);
+    roomManager.openPoll(roomCode, participantId, Number(durationSeconds) || 0);
   });
 
   socket.on('host:close_poll', ({ roomCode }) => {

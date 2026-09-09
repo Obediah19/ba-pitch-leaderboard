@@ -22,12 +22,11 @@ export const Home: React.FC = () => {
     navigate(`/join/${clean}`);
   };
 
-  const handleHost = async () => {
-    try {
-      if (!user) await quickHostLogin();
+  const handleHost = () => {
+    if (user) {
       navigate('/host/dashboard');
-    } catch (err) {
-      console.error(err);
+    } else {
+      navigate('/host/login');
     }
   };
 

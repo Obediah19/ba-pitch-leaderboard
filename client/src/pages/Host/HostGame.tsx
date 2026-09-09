@@ -3,8 +3,46 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../context/SocketContext.js';
 import { Aurora } from '../../components/ReactBits/Aurora.js';
 import { EmojiLayer, EmojiStorm } from '../../components/Game/StageFx.js';
-import { Play, Square, Plus, ExternalLink, UserPlus, X, Users, UserX } from 'lucide-react';
+import { Play, Square, Plus, ExternalLink, UserPlus, X, Users, UserX, Clock } from 'lucide-react';
 import { getAvatarDataUri } from '../../services/avatar.js';
+
+const CircularHostTimer: React.FC<{ remaining: number; total: number }> = ({ remaining, total }) => {
+  if (total <= 0) return null;
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  const progress = Math.max(0, Math.min(1, remaining / total));
+  const strokeDashoffset = circumference * (1 - progress);
+
+  return (
+    <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+      <svg className="w-full h-full transform -rotate-90">
+        <circle
+          cx="24"
+          cy="24"
+          r={radius}
+          stroke="rgba(255, 255, 255, 0.15)"
+          strokeWidth="3.5"
+          fill="transparent"
+        />
+        <circle
+          cx="24"
+          cy="24"
+          r={radius}
+          stroke="#EF4444"
+          strokeWidth="3.5"
+          fill="transparent"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          className="transition-all duration-1000 ease-linear"
+        />
+      </svg>
+      <span className="absolute font-mono font-bold text-xs text-white">
+        {remaining}s
+      </span>
+    </div>
+  );
+};
 
 export const HostGame: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -17,6 +55,11 @@ export const HostGame: React.FC = () => {
   const [activePoll, setActivePoll] = useState<string | null>(null);
   const [pollStatus, setPollStatus] = useState<'CLOSED' | 'OPEN'>('CLOSED');
   const [title, setTitle] = useState('');
+
+  // Timer state per participant
+  const [selectedTimers, setSelectedTimers] = useState<{ [id: string]: number }>({});
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [totalTimerSeconds, setTotalTimerSeconds] = useState(0);
 
   // Manual score input state
   const [manualScores, setManualScores] = useState<{ [id: string]: string }>({});
@@ -49,17 +92,36 @@ export const HostGame: React.FC = () => {
         return prev.map((p) => {
           const lb = d.leaderboard.find((l: any) => l.id === p.id);
           if (lb) {
-            return { ...p, score: lb.totalScore, voteCount: lb.voteCount };
+            return {
+              ...p,
+              score: lb.totalScore,
+              voteCount: lb.voteCount,
+              averageScore: lb.averageScore,
+            };
           }
           return p;
         });
       });
     };
 
+    const onTimerTick = (d: any) => {
+      setRemainingSeconds(d.remainingSeconds);
+      if (d.totalSeconds) setTotalTimerSeconds(d.totalSeconds);
+    };
+
+    const onPollClosed = () => {
+      setActivePoll(null);
+      setPollStatus('CLOSED');
+      setRemainingSeconds(0);
+      setTotalTimerSeconds(0);
+    };
+
     socket.on('host:room_created', onRoomCreated);
     socket.on('room:lobby_update', onLobbyUpdate);
     socket.on('host:participants_updated', onParticipantsUpdated);
     socket.on('leaderboard:update', onLeaderboardUpdate);
+    socket.on('game:poll_timer_tick', onTimerTick);
+    socket.on('game:poll_closed', onPollClosed);
 
     socket.emit('player:join', { roomCode, nickname: 'HOST_OBSERVER', avatar: 'host' });
 
@@ -68,19 +130,26 @@ export const HostGame: React.FC = () => {
       socket.off('room:lobby_update', onLobbyUpdate);
       socket.off('host:participants_updated', onParticipantsUpdated);
       socket.off('leaderboard:update', onLeaderboardUpdate);
+      socket.off('game:poll_timer_tick', onTimerTick);
+      socket.off('game:poll_closed', onPollClosed);
     };
   }, [socket, roomCode]);
 
   const openPoll = (id: string) => {
-    socket?.emit('host:open_poll', { roomCode, participantId: id });
+    const timerSec = selectedTimers[id] !== undefined ? selectedTimers[id] : 30; // default 30s
+    socket?.emit('host:open_poll', { roomCode, participantId: id, durationSeconds: timerSec });
     setActivePoll(id);
     setPollStatus('OPEN');
+    setTotalTimerSeconds(timerSec);
+    setRemainingSeconds(timerSec);
   };
 
   const closePoll = () => {
     socket?.emit('host:close_poll', { roomCode });
     setActivePoll(null);
     setPollStatus('CLOSED');
+    setRemainingSeconds(0);
+    setTotalTimerSeconds(0);
   };
 
   const addScore = (id: string) => {
@@ -117,8 +186,7 @@ export const HostGame: React.FC = () => {
     setShowAddModal(false);
   };
 
-  // Filter out host observer from voters count
-  const realVoters = voters.filter(v => v.nickname !== 'HOST_OBSERVER');
+  const realVoters = voters.filter((v) => v.nickname !== 'HOST_OBSERVER');
 
   return (
     <Aurora intensity="subtle" className="text-[var(--color-chalk)] overflow-y-auto min-h-screen">
@@ -201,6 +269,12 @@ export const HostGame: React.FC = () => {
         <div className="flex flex-col gap-6">
           {participants.map((p, idx) => {
             const isVoting = activePoll === p.id && pollStatus === 'OPEN';
+            const avgScore =
+              p.averageScore !== undefined
+                ? Number(p.averageScore).toFixed(2)
+                : p.voteCount > 0
+                ? (p.score / p.voteCount).toFixed(2)
+                : '0.00';
 
             return (
               <div
@@ -215,9 +289,12 @@ export const HostGame: React.FC = () => {
                       {idx + 1}. {p.name}
                     </span>
                     {isVoting && (
-                      <span className="px-2.5 py-1 rounded text-xs font-bold bg-[var(--color-volt)] text-white animate-pulse">
-                        LIVE POLL OPEN
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded text-xs font-bold bg-[var(--color-volt)] text-white animate-pulse">
+                          LIVE POLL OPEN
+                        </span>
+                        <CircularHostTimer remaining={remainingSeconds} total={totalTimerSeconds} />
+                      </div>
                     )}
                   </div>
                   <p className="text-sm font-semibold text-[var(--color-chalk-soft)]">
@@ -225,15 +302,44 @@ export const HostGame: React.FC = () => {
                   </p>
                   <div className="flex items-center gap-4 mt-2">
                     <span className="text-sm">
-                      Total Points: <strong className="tabular text-xl text-[var(--color-volt)]">{p.score || 0}</strong>
+                      Average Score:{' '}
+                      <strong className="tabular text-2xl text-[var(--color-volt)] font-display font-bold">
+                        {avgScore}
+                      </strong>{' '}
+                      <span className="text-xs text-[var(--color-chalk-soft)]">/ 10</span>
                     </span>
                     <span className="text-sm text-[var(--color-chalk-faint)]">
                       Audience Votes: <strong className="tabular">{p.voteCount || 0}</strong>
+                    </span>
+                    <span className="text-xs text-[var(--color-chalk-faint)]">
+                      Total Points: <strong className="tabular">{p.score || 0}</strong>
                     </span>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-3 w-full sm:w-auto shrink-0">
+                  {!isVoting && (
+                    <div className="flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/10 text-xs">
+                      <Clock className="w-4 h-4 text-[var(--color-volt)]" />
+                      <span className="font-bold text-[var(--color-chalk-soft)]">Timer:</span>
+                      <select
+                        value={selectedTimers[p.id] !== undefined ? selectedTimers[p.id] : 30}
+                        onChange={(e) =>
+                          setSelectedTimers((prev) => ({ ...prev, [p.id]: parseInt(e.target.value, 10) }))
+                        }
+                        className="bg-transparent font-bold text-white focus:outline-none cursor-pointer"
+                      >
+                        <option value={0} className="bg-gray-900 text-white">No Limit</option>
+                        <option value={15} className="bg-gray-900 text-white">15 seconds</option>
+                        <option value={30} className="bg-gray-900 text-white">30 seconds</option>
+                        <option value={45} className="bg-gray-900 text-white">45 seconds</option>
+                        <option value={60} className="bg-gray-900 text-white">60 seconds</option>
+                        <option value={90} className="bg-gray-900 text-white">90 seconds</option>
+                        <option value={120} className="bg-gray-900 text-white">120 seconds</option>
+                      </select>
+                    </div>
+                  )}
+
                   {isVoting ? (
                     <button
                       onClick={closePoll}
@@ -323,7 +429,7 @@ export const HostGame: React.FC = () => {
                   value={newPartName}
                   onChange={(e) => setNewPartName(e.target.value)}
                   placeholder="e.g. Team Gamma"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-[var(--color-line)] text-sm font-semibold focus:outline-none focus:border-[var(--color-volt)] transition"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-[var(--color-line)] text-sm font-semibold focus:outline-none focus:border-[var(--color-volt)] transition text-white"
                 />
               </div>
 
@@ -336,7 +442,7 @@ export const HostGame: React.FC = () => {
                   value={newPartIdea}
                   onChange={(e) => setNewPartIdea(e.target.value)}
                   placeholder="e.g. Decentralized solar grid network"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-[var(--color-line)] text-sm font-semibold focus:outline-none focus:border-[var(--color-volt)] transition"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-[var(--color-line)] text-sm font-semibold focus:outline-none focus:border-[var(--color-volt)] transition text-white"
                 />
               </div>
 

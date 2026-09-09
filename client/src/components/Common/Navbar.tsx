@@ -62,7 +62,7 @@ export const Navbar: React.FC = () => {
             {user ? (
               <div className="flex items-center gap-2">
                 <Link to="/host/dashboard"
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-volt text-sm">
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-volt text-sm font-bold">
                   <LayoutDashboard className="w-4 h-4" />
                   <span>Host Dashboard</span>
                 </Link>
@@ -72,11 +72,11 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <button onClick={quickHost}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-volt text-sm">
+              <Link to="/host/login"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl btn-volt text-sm font-bold">
                 <LogIn className="w-4 h-4" />
-                <span>Host a Quiz</span>
-              </button>
+                <span>Host Portal</span>
+              </Link>
             )}
           </div>
         </div>

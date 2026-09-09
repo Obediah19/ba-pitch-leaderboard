@@ -10,7 +10,7 @@ import { StarBorder } from '../../components/ReactBits/StarBorder.js';
 import { DecryptedText } from '../../components/ReactBits/DecryptedText.js';
 import { CountUp } from '../../components/ReactBits/CountUp.js';
 import { EmojiLayer, EmojiStorm } from '../../components/Game/StageFx.js';
-import { Play, Volume2, VolumeX, Copy, Check, Users, UserX } from 'lucide-react';
+import { Play, Volume2, VolumeX, Copy, Check, Users, UserX, ExternalLink, Plus, UserPlus, X } from 'lucide-react';
 
 export const HostLobby: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -25,6 +25,11 @@ export const HostLobby: React.FC = () => {
   const [title, setTitle] = useState('');
   const [copied, setCopied] = useState(false);
   const [music, setMusic] = useState(false);
+
+  // Add Pitch Modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newPartName, setNewPartName] = useState('');
+  const [newPartIdea, setNewPartIdea] = useState('');
 
   useEffect(() => {
     if (!socket || !raw) return;
@@ -53,7 +58,6 @@ export const HostLobby: React.FC = () => {
     else { sound.startLobbyMusic(); setMusic(true); }
   };
   const start = () => {
-    if (!players.length || !socket) return;
     sound.stopLobbyMusic();
     navigate(`/host/game/${raw}`);
   };
@@ -68,6 +72,21 @@ export const HostLobby: React.FC = () => {
     socket?.emit('host:kick_player', { roomCode: raw, sessionToken: target, playerId: target });
   };
 
+  const handleAddParticipantLive = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPartName.trim() || !socket) return;
+
+    socket.emit('host:add_participant', {
+      roomCode: raw,
+      name: newPartName.trim(),
+      productIdea: newPartIdea.trim(),
+    });
+
+    setNewPartName('');
+    setNewPartIdea('');
+    setShowAddModal(false);
+  };
+
   return (
     <Aurora intensity="subtle" className="text-[var(--color-chalk)]">
       <EmojiLayer />
@@ -75,12 +94,26 @@ export const HostLobby: React.FC = () => {
 
       <div className="flex flex-col justify-between min-h-screen p-6 sm:p-12 select-none">
         {/* top bar */}
-        <div className="max-w-5xl mx-auto w-full flex items-center justify-between">
+        <div className="max-w-5xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">🎯</span>
             <span className="font-display font-semibold text-lg text-[var(--color-chalk)]/90">{title || 'Pitch Competition'}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--color-volt)] hover:bg-[var(--color-volt)]/80 text-xs font-bold text-white transition shadow-lg"
+            >
+              <UserPlus className="w-3.5 h-3.5" /> Add Pitch / Team
+            </button>
+            <a
+              href={`/leaderboard/${raw}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-[var(--color-chalk-soft)] transition"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-[var(--color-volt)]" /> Live Leaderboard
+            </a>
             <button onClick={copy} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-semibold text-[var(--color-chalk-soft)] transition">
               {copied ? <Check className="w-3.5 h-3.5 text-[var(--color-good)]" /> : <Copy className="w-3.5 h-3.5" />}
               {copied ? 'Copied' : 'Copy join link'}
@@ -117,7 +150,7 @@ export const HostLobby: React.FC = () => {
               <CountUp to={players.length} duration={0.5} /> {players.length === 1 ? 'player' : 'players'} joined
             </div>
             {players.length === 0 ? (
-              <p className="py-8 text-[var(--color-chalk-faint)] font-semibold text-sm">Waiting for players to enter the code…</p>
+              <p className="py-8 text-[var(--color-chalk-faint)] font-semibold text-sm">Waiting for players to enter the code… (You can start anytime!)</p>
             ) : (
               <div className="flex flex-wrap justify-center gap-5 max-w-3xl max-h-64 overflow-y-auto p-2">
                 <AnimatePresence>
@@ -152,19 +185,77 @@ export const HostLobby: React.FC = () => {
 
         {/* start */}
         <div className="max-w-xs mx-auto w-full pb-2">
-          {players.length > 0 ? (
-            <StarBorder as="button" onClick={start} color="#8B5CF6" speed="3s" className="w-full">
-              <span className="flex items-center justify-center gap-2 py-4 font-display font-bold text-xl text-white">
-                <Play className="w-5 h-5 fill-white" /> START COMPETITION
-              </span>
-            </StarBorder>
-          ) : (
-            <button disabled className="btn-volt w-full py-4 text-xl opacity-40">
-              <span className="flex items-center justify-center gap-2"><Play className="w-5 h-5 fill-white" /> START COMPETITION</span>
-            </button>
-          )}
+          <StarBorder as="button" onClick={start} color="#8B5CF6" speed="3s" className="w-full">
+            <span className="flex items-center justify-center gap-2 py-4 font-display font-bold text-xl text-white">
+              <Play className="w-5 h-5 fill-white" /> START COMPETITION
+            </span>
+          </StarBorder>
         </div>
       </div>
+
+      {/* Add Pitch Live Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 select-text">
+          <div className="w-full max-w-md bg-[var(--color-paper-raised)] border border-[var(--color-line)] rounded-2xl p-6 shadow-2xl flex flex-col gap-5 text-[var(--color-ink)]">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-display font-bold flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-[var(--color-volt)]" /> Add Pitch / Team Entry
+              </h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-1 rounded-lg hover:bg-white/10 text-[var(--color-ink-soft)] transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddParticipantLive} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-ink-soft)]">
+                  Participant / Team Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newPartName}
+                  onChange={(e) => setNewPartName(e.target.value)}
+                  placeholder="e.g. Team HR26"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-[var(--color-line)] text-sm font-semibold focus:outline-none focus:border-[var(--color-volt)] transition text-white"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-ink-soft)]">
+                  Product / Startup Idea
+                </label>
+                <input
+                  type="text"
+                  value={newPartIdea}
+                  onChange={(e) => setNewPartIdea(e.target.value)}
+                  placeholder="e.g. Gurgaon AI logistics platform"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-[var(--color-line)] text-sm font-semibold focus:outline-none focus:border-[var(--color-volt)] transition text-white"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-[var(--color-ink-soft)] transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-volt px-5 py-2.5 text-xs font-bold flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" /> Add Team Entry
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Aurora>
   );
 };

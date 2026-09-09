@@ -61,6 +61,10 @@ export interface RoomState {
   socketToToken: Map<string, string>; // socketId -> sessionToken
   createdAt: number;
   lastActivityAt: number;
+  // timer & polling
+  pollTimer: NodeJS.Timeout | null;
+  pollTimerSeconds: number;
+  pollTimerRemaining: number;
   // emoji reaction batching (large rooms) + storm detection
   reactionBatch: string[];
   reactionBatchTimer: NodeJS.Timeout | null;
@@ -96,6 +100,7 @@ export class RoomManager {
     const room = this.rooms.get(code);
     if (!room) return;
     if (room.reactionBatchTimer) clearInterval(room.reactionBatchTimer);
+    if (room.pollTimer) clearInterval(room.pollTimer);
     this.rooms.delete(code);
     console.log(`[GC] Room ${code} destroyed`);
   }
@@ -144,6 +149,9 @@ export class RoomManager {
       socketToToken: new Map(),
       createdAt: now,
       lastActivityAt: now,
+      pollTimer: null,
+      pollTimerSeconds: 0,
+      pollTimerRemaining: 0,
       reactionBatch: [],
       reactionBatchTimer: null,
       stormWindow: [],
@@ -348,11 +356,16 @@ export class RoomManager {
   }
 
   // Polling logic
-  public openPoll(code: string, participantId: string) {
+  public openPoll(code: string, participantId: string, durationSeconds?: number) {
     const room = this.getRoom(code);
     if (!room) return;
     this.touch(room);
     
+    if (room.pollTimer) {
+      clearInterval(room.pollTimer);
+      room.pollTimer = null;
+    }
+
     room.status = 'POLL_OPEN';
     room.activeParticipantId = participantId;
     
@@ -361,11 +374,32 @@ export class RoomManager {
 
     const participant = room.competition.participants.find(p => p.id === participantId);
     
+    const seconds = Number(durationSeconds) || 0;
+    room.pollTimerSeconds = seconds;
+    room.pollTimerRemaining = seconds;
+
     this.io.to(room.code).emit('game:poll_open', {
       participantId,
       name: participant?.name,
-      productIdea: participant?.productIdea
+      productIdea: participant?.productIdea,
+      durationSeconds: seconds,
+      remainingSeconds: seconds,
     });
+
+    if (seconds > 0) {
+      room.pollTimer = setInterval(() => {
+        room.pollTimerRemaining -= 1;
+        this.io.to(room.code).emit('game:poll_timer_tick', {
+          remainingSeconds: room.pollTimerRemaining,
+          totalSeconds: seconds,
+          participantId,
+        });
+
+        if (room.pollTimerRemaining <= 0) {
+          this.closePoll(code);
+        }
+      }, 1000);
+    }
   }
 
   public closePoll(code: string) {
@@ -373,8 +407,14 @@ export class RoomManager {
     if (!room || room.status !== 'POLL_OPEN') return;
     this.touch(room);
 
+    if (room.pollTimer) {
+      clearInterval(room.pollTimer);
+      room.pollTimer = null;
+    }
+
     room.status = 'POLL_CLOSED';
     room.activeParticipantId = null;
+    room.pollTimerRemaining = 0;
 
     this.io.to(room.code).emit('game:poll_closed');
   }
@@ -404,7 +444,6 @@ export class RoomManager {
 
     this.io.to(player.socketId).emit('player:vote_acknowledged', { score });
     
-    // Broadcast leaderboard update via a separate room for observers (live leaderboard page)
     this.broadcastLeaderboardUpdate(room);
 
     return { success: true };
@@ -474,14 +513,21 @@ export class RoomManager {
 
   public broadcastLeaderboardUpdate(room: RoomState) {
     const leaderboard = room.competition.participants.map(p => {
+      const avg = p.voteCount > 0 ? Number((p.score / p.voteCount).toFixed(2)) : (p.score > 0 ? p.score : 0);
       return {
         id: p.id,
         name: p.name,
         productIdea: p.productIdea,
         voteCount: p.voteCount,
-        totalScore: p.score
+        totalScore: p.score,
+        averageScore: avg,
       };
-    }).sort((a, b) => b.totalScore - a.totalScore);
+    }).sort((a, b) => {
+      if (b.averageScore !== a.averageScore) {
+        return b.averageScore - a.averageScore;
+      }
+      return b.voteCount - a.voteCount;
+    });
 
     this.io.to(room.code).emit('leaderboard:update', { leaderboard });
     this.io.to(`leaderboard_${room.code}`).emit('leaderboard:update', { leaderboard });
@@ -490,13 +536,22 @@ export class RoomManager {
   public sendLeaderboardUpdate(socketId: string, code: string) {
     const room = this.getRoom(code);
     if (!room) return;
-    const leaderboard = room.competition.participants.map(p => ({
-      id: p.id,
-      name: p.name,
-      productIdea: p.productIdea,
-      voteCount: p.voteCount,
-      totalScore: p.score
-    })).sort((a, b) => b.totalScore - a.totalScore);
+    const leaderboard = room.competition.participants.map(p => {
+      const avg = p.voteCount > 0 ? Number((p.score / p.voteCount).toFixed(2)) : (p.score > 0 ? p.score : 0);
+      return {
+        id: p.id,
+        name: p.name,
+        productIdea: p.productIdea,
+        voteCount: p.voteCount,
+        totalScore: p.score,
+        averageScore: avg,
+      };
+    }).sort((a, b) => {
+      if (b.averageScore !== a.averageScore) {
+        return b.averageScore - a.averageScore;
+      }
+      return b.voteCount - a.voteCount;
+    });
 
     this.io.to(socketId).emit('leaderboard:update', { leaderboard });
   }
@@ -510,6 +565,8 @@ export class RoomManager {
       status: room.status,
       activeParticipantId: room.activeParticipantId,
       hasVoted: player.hasVotedCurrent,
+      durationSeconds: room.pollTimerSeconds,
+      remainingSeconds: room.pollTimerRemaining,
       participant: room.activeParticipantId 
         ? room.competition.participants.find(p => p.id === room.activeParticipantId)
         : null
