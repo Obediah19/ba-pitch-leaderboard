@@ -125,4 +125,10 @@ export function registerHostHandlers(io: Server, socket: Socket, roomManager: Ro
     io.to(room.code).emit('room:lock_status', { isLocked: room.isLocked });
     roomManager.broadcastLobbyUpdate(room);
   });
+
+  socket.on('host:add_participant', ({ roomCode, name, productIdea }) => {
+    const room = roomManager.getRoom(roomCode);
+    if (!room || room.hostSocketId !== socket.id) return;
+    roomManager.addParticipantToRoom(roomCode, String(name || ''), String(productIdea || ''));
+  });
 }

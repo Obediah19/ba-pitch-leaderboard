@@ -14,7 +14,7 @@ import {
 const KNOWN_EVENTS = new Set([
   'player:join', 'player:submit_vote', 'player:reaction', 'player:reconnect',
   'host:create_room', 'host:open_poll', 'host:close_poll', 'host:manual_score', 'host:overwrite_score',
-  'host:kick_player', 'host:toggle_lock', 'leaderboard:join',
+  'host:kick_player', 'host:toggle_lock', 'host:add_participant', 'leaderboard:join',
   'room:sync_request',
   // socket.io internals
   'disconnect', 'disconnecting', 'error',

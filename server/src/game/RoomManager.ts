@@ -428,6 +428,44 @@ export class RoomManager {
     return true;
   }
 
+  public addParticipantToRoom(code: string, name: string, productIdea: string): ParticipantData | null {
+    const room = this.getRoom(code);
+    if (!room) return null;
+    this.touch(room);
+
+    const newPart: ParticipantData = {
+      id: uuidv4(),
+      order: room.competition.participants.length,
+      name: name.trim() || `Participant ${room.competition.participants.length + 1}`,
+      productIdea: productIdea.trim() || '',
+      score: 0,
+      voteCount: 0,
+    };
+
+    room.competition.participants.push(newPart);
+
+    this.io.to(room.hostSocketId).emit('host:participants_updated', {
+      participants: room.competition.participants,
+    });
+    this.broadcastLeaderboardUpdate(room);
+
+    const dbComp = db.getCompetitionById(room.competition.id);
+    if (dbComp) {
+      dbComp.participants.push({
+        id: newPart.id,
+        competition_id: dbComp.id,
+        participant_order: newPart.order,
+        name: newPart.name,
+        product_idea: newPart.productIdea,
+        score: 0,
+        vote_count: 0,
+      });
+      db.save();
+    }
+
+    return newPart;
+  }
+
   public broadcastLeaderboardUpdate(room: RoomState) {
     const leaderboard = room.competition.participants.map(p => {
       return {
