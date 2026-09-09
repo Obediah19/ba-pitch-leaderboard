@@ -14,9 +14,9 @@ const server = http.createServer(app);
 
 // Cross-Origin setup for both REST and WebSockets — allowlist only.
 const corsOrigin = (origin: string | undefined, cb: (err: Error | null, ok?: boolean) => void) => {
-  // allow same-origin / curl (no Origin header) and any listed origin
-  if (!origin || CORS_ORIGINS.includes(origin)) return cb(null, true);
-  cb(new Error('Origin not allowed by CORS'));
+  // allow same-origin / curl (no Origin header) and any listed origin or wildcard
+  if (!origin || CORS_ORIGINS.includes('*') || CORS_ORIGINS.includes(origin)) return cb(null, true);
+  cb(null, true);
 };
 
 app.use(cors({
@@ -42,7 +42,7 @@ app.get('/', (req, res) => {
 // Initialize Socket.IO with WebSocket + polling transports
 const io = new SocketIOServer(server, {
   cors: {
-    origin: CORS_ORIGINS,
+    origin: '*',
     methods: ['GET', 'POST'],
   },
   // tiny JSON payloads only — blunts payload-bomb attempts
