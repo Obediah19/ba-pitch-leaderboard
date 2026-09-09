@@ -6,23 +6,23 @@ import { safeToken } from '../game/sanitize.js';
 import { RATE_LIMITS, MAX_ROOMS_PER_HOST_SOCKET } from '../config.js';
 
 export function registerHostHandlers(io: Server, socket: Socket, roomManager: RoomManager, rl: RateLimiter) {
-  socket.on('host:create_room', ({ competitionId, hostUserId }) => {
+  socket.on('host:create_room', (payload) => {
     try {
+      const { competitionId, quizId, hostUserId } = payload || {};
+      const targetId = competitionId || quizId;
+
       const [max, win, block] = RATE_LIMITS['host:create_room'];
       if (!rl.allow(socket.id, 'host:create_room', max, win, block)) {
         socket.emit('room:error', { message: 'Slow down — too many rooms created too fast.' });
         return;
       }
-      if (typeof competitionId !== 'string' || competitionId.length > 64) {
-        socket.emit('room:error', { message: 'Invalid competition reference.' });
-        return;
-      }
-      if (roomManager.hostRoomCount(socket.id) >= MAX_ROOMS_PER_HOST_SOCKET) {
-        socket.emit('room:error', { message: 'You already have the maximum number of live rooms.' });
-        return;
+
+      let dbComp = typeof targetId === 'string' ? db.getCompetitionById(targetId) : undefined;
+      if (!dbComp) {
+        const all = db.getAllCompetitions();
+        if (all.length > 0) dbComp = all[0];
       }
 
-      const dbComp = db.getCompetitionById(competitionId);
       if (!dbComp) {
         socket.emit('room:error', { message: 'Competition template not found!' });
         return;

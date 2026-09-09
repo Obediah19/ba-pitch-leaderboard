@@ -43,12 +43,12 @@ export const HostDashboard: React.FC = () => {
   const launch = (id: string) => {
     if (!socket) return;
     setLaunching(id);
-    socket.emit('host:create_room', { quizId: id, hostUserId: user?.id, settings: { showTextOnPlayerScreen: true } });
+    socket.emit('host:create_room', { competitionId: id, quizId: id, hostUserId: user?.id });
   };
-  const duplicate = async (id: string) => { try { await apiRequest(`/api/quizzes/${id}/duplicate`, { method: 'POST' }); load(); } catch (e) { console.error(e); } };
+  const duplicate = async (id: string) => { try { await apiRequest(`/api/competitions/${id}/duplicate`, { method: 'POST' }); load(); } catch (e) { console.error(e); } };
   const remove = async (id: string) => {
-    if (!window.confirm('Delete this quiz? This cannot be undone.')) return;
-    try { await apiRequest(`/api/quizzes/${id}`, { method: 'DELETE' }); load(); } catch (e) { console.error(e); }
+    if (!window.confirm('Delete this competition? This cannot be undone.')) return;
+    try { await apiRequest(`/api/competitions/${id}`, { method: 'DELETE' }); load(); } catch (e) { console.error(e); }
   };
 
   return (
@@ -109,8 +109,8 @@ export const HostDashboard: React.FC = () => {
 
                   <div className="flex flex-col gap-3 pt-4 border-t border-[var(--color-line)]">
                     <button onClick={() => launch(quiz.id)} disabled={launching === quiz.id}
-                      className="btn-volt w-full py-3 text-sm flex items-center justify-center gap-2">
-                      <Play className="w-4 h-4 fill-white" /> {launching === quiz.id ? 'Launching…' : 'START LIVE QUIZ'}
+                      className="btn-volt w-full py-3 text-sm flex items-center justify-center gap-2 font-bold">
+                      <Play className="w-4 h-4 fill-white" /> {launching === quiz.id ? 'Launching…' : 'START PITCH SESSION'}
                     </button>
                     <div className="flex items-center justify-between text-xs font-semibold text-[var(--color-ink-soft)]">
                       <Link to={`/host/editor/${quiz.id}`} className="flex items-center gap-1 hover:text-[var(--color-ink)] transition"><Edit className="w-3.5 h-3.5" /> Edit</Link>
