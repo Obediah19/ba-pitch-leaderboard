@@ -56,9 +56,9 @@ export const HostDashboard: React.FC = () => {
       <div className="max-w-5xl mx-auto flex flex-col gap-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-[var(--color-line)]">
           <div>
-            <span className="eyebrow text-[var(--color-volt)] flex items-center gap-1.5"><LayoutGrid className="w-3.5 h-3.5" /> Host</span>
+            <span className="eyebrow text-[var(--color-volt)] flex items-center gap-1.5"><LayoutGrid className="w-3.5 h-3.5" /> Pitch Competition Host v2.0</span>
             <h1 className="text-3xl font-display font-bold mt-1">Competition Library</h1>
-            <p className="text-sm font-semibold text-[var(--color-ink-soft)] mt-0.5">Launch one live, or build a new one.</p>
+            <p className="text-sm font-semibold text-[var(--color-ink-soft)] mt-0.5">Launch one live, or build a new pitch competition.</p>
           </div>
           <Link to="/host/editor" className="btn-volt inline-flex items-center gap-2 px-5 py-2.5 text-sm self-start sm:self-auto">
             <Plus className="w-4 h-4" /> Create Competition
