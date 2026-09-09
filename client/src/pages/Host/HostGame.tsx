@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSocket } from '../../context/SocketContext.js';
 import { Aurora } from '../../components/ReactBits/Aurora.js';
 import { EmojiLayer, EmojiStorm } from '../../components/Game/StageFx.js';
-import { Play, Square, Plus, ExternalLink, UserPlus, X } from 'lucide-react';
+import { Play, Square, Plus, ExternalLink, UserPlus, X, Users, UserX } from 'lucide-react';
+import { getAvatarDataUri } from '../../services/avatar.js';
 
 export const HostGame: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -12,6 +13,7 @@ export const HostGame: React.FC = () => {
   const roomCode = (code || '').toUpperCase();
 
   const [participants, setParticipants] = useState<any[]>([]);
+  const [voters, setVoters] = useState<any[]>([]);
   const [activePoll, setActivePoll] = useState<string | null>(null);
   const [pollStatus, setPollStatus] = useState<'CLOSED' | 'OPEN'>('CLOSED');
   const [title, setTitle] = useState('');
@@ -34,6 +36,10 @@ export const HostGame: React.FC = () => {
       setParticipants(d.participants || []);
     };
 
+    const onLobbyUpdate = (d: any) => {
+      setVoters(d.players || []);
+    };
+
     const onParticipantsUpdated = (d: any) => {
       setParticipants(d.participants || []);
     };
@@ -51,6 +57,7 @@ export const HostGame: React.FC = () => {
     };
 
     socket.on('host:room_created', onRoomCreated);
+    socket.on('room:lobby_update', onLobbyUpdate);
     socket.on('host:participants_updated', onParticipantsUpdated);
     socket.on('leaderboard:update', onLeaderboardUpdate);
 
@@ -58,6 +65,7 @@ export const HostGame: React.FC = () => {
 
     return () => {
       socket.off('host:room_created', onRoomCreated);
+      socket.off('room:lobby_update', onLobbyUpdate);
       socket.off('host:participants_updated', onParticipantsUpdated);
       socket.off('leaderboard:update', onLeaderboardUpdate);
     };
@@ -89,6 +97,11 @@ export const HostGame: React.FC = () => {
     setManualScores((prev) => ({ ...prev, [id]: '' }));
   };
 
+  const kickVoter = (target: string) => {
+    if (!window.confirm('Kick this participant from the room?')) return;
+    socket?.emit('host:kick_player', { roomCode, sessionToken: target, playerId: target });
+  };
+
   const handleAddParticipantLive = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPartName.trim() || !socket) return;
@@ -104,12 +117,15 @@ export const HostGame: React.FC = () => {
     setShowAddModal(false);
   };
 
+  // Filter out host observer from voters count
+  const realVoters = voters.filter(v => v.nickname !== 'HOST_OBSERVER');
+
   return (
     <Aurora intensity="subtle" className="text-[var(--color-chalk)] overflow-y-auto min-h-screen">
       <EmojiLayer />
       <EmojiStorm />
 
-      <div className="flex flex-col min-h-screen p-6 sm:p-10 select-none max-w-5xl mx-auto w-full">
+      <div className="flex flex-col min-h-screen p-6 sm:p-10 select-none max-w-5xl mx-auto w-full gap-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-white/10 gap-4">
           <div className="flex flex-col gap-1">
@@ -142,8 +158,47 @@ export const HostGame: React.FC = () => {
           </div>
         </div>
 
+        {/* Audience Voter Roster */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-chalk-soft)] flex items-center gap-2">
+              <Users className="w-4 h-4 text-[var(--color-volt)]" /> Connected Audience Voters ({realVoters.length})
+            </span>
+            <span className="text-xs text-[var(--color-chalk-faint)] font-semibold">Hover over a voter to kick</span>
+          </div>
+
+          {realVoters.length === 0 ? (
+            <p className="text-xs font-semibold text-[var(--color-chalk-faint)] py-2">
+              No audience members currently connected. Participants join at <strong className="text-white">{window.location.host}/join</strong>
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {realVoters.map((v) => (
+                <div
+                  key={v.playerId}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-bold group relative"
+                >
+                  <img
+                    src={getAvatarDataUri(v.avatar || v.nickname)}
+                    alt={v.nickname}
+                    className="w-5 h-5 rounded-full"
+                  />
+                  <span>{v.nickname}</span>
+                  <button
+                    onClick={() => kickVoter(v.sessionToken || v.playerId)}
+                    className="p-1 rounded-full bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white transition ml-1"
+                    title={`Kick ${v.nickname}`}
+                  >
+                    <UserX className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Pitch Roster */}
-        <div className="flex flex-col gap-6 mt-8">
+        <div className="flex flex-col gap-6">
           {participants.map((p, idx) => {
             const isVoting = activePoll === p.id && pollStatus === 'OPEN';
 

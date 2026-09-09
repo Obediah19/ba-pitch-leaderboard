@@ -10,7 +10,7 @@ import { StarBorder } from '../../components/ReactBits/StarBorder.js';
 import { DecryptedText } from '../../components/ReactBits/DecryptedText.js';
 import { CountUp } from '../../components/ReactBits/CountUp.js';
 import { EmojiLayer, EmojiStorm } from '../../components/Game/StageFx.js';
-import { Play, Volume2, VolumeX, Copy, Check, Users } from 'lucide-react';
+import { Play, Volume2, VolumeX, Copy, Check, Users, UserX } from 'lucide-react';
 
 export const HostLobby: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -61,6 +61,11 @@ export const HostLobby: React.FC = () => {
     navigator.clipboard.writeText(joinUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const kickPlayer = (target: string) => {
+    if (!window.confirm('Remove this voter from the room?')) return;
+    socket?.emit('host:kick_player', { roomCode: raw, sessionToken: target, playerId: target });
   };
 
   return (
@@ -123,8 +128,15 @@ export const HostLobby: React.FC = () => {
                       animate={{ scale: 1, opacity: 1, y: 0 }}
                       exit={{ scale: 0, opacity: 0 }}
                       transition={{ type: 'spring', stiffness: 380, damping: 24, delay: (i % 6) * 0.03 }}
-                      className="flex flex-col items-center gap-1.5"
+                      className="flex flex-col items-center gap-1.5 group relative"
                     >
+                      <button
+                        onClick={() => kickPlayer(p.sessionToken || p.playerId)}
+                        className="absolute -top-1 -right-1 z-10 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                        title="Kick player"
+                      >
+                        <UserX className="w-3 h-3" />
+                      </button>
                       <div className="w-14 h-14 rounded-full bg-white/10 border-2 border-white/80 grid place-items-center overflow-hidden avatar-bob"
                         style={{ animationDelay: `${(i % 6) * 0.22}s` }}>
                         <img src={getAvatarDataUri(p.avatar || p.nickname)} alt={p.nickname} className="w-12 h-12" />

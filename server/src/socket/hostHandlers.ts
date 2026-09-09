@@ -110,12 +110,12 @@ export function registerHostHandlers(io: Server, socket: Socket, roomManager: Ro
     }
   });
 
-  socket.on('host:kick_player', ({ roomCode, sessionToken }) => {
+  socket.on('host:kick_player', ({ roomCode, sessionToken, playerId }) => {
     const room = roomManager.getRoom(roomCode);
     if (!room || room.hostSocketId !== socket.id) return;
-    const token = safeToken(sessionToken);
-    if (!token) return;
-    roomManager.kickPlayer(roomCode, token);
+    const target = sessionToken || playerId;
+    if (!target) return;
+    roomManager.kickPlayer(roomCode, target);
   });
 
   socket.on('host:toggle_lock', ({ roomCode }) => {

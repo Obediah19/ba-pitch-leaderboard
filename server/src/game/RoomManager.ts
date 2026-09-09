@@ -238,13 +238,26 @@ export class RoomManager {
     return { room, isHost: false };
   }
 
-  public kickPlayer(code: string, sessionToken: string): boolean {
+  public kickPlayer(code: string, idOrToken: string): boolean {
     const room = this.getRoom(code);
-    if (!room || !room.players.has(sessionToken)) return false;
+    if (!room) return false;
 
-    const player = room.players.get(sessionToken)!;
+    let targetToken: string | undefined;
+    if (room.players.has(idOrToken)) {
+      targetToken = idOrToken;
+    } else {
+      for (const [token, p] of room.players.entries()) {
+        if (p.playerId === idOrToken) {
+          targetToken = token;
+          break;
+        }
+      }
+    }
+    if (!targetToken) return false;
+
+    const player = room.players.get(targetToken)!;
     room.socketToToken.delete(player.socketId);
-    room.players.delete(sessionToken);
+    room.players.delete(targetToken);
 
     this.io.to(player.socketId).emit('room:kicked', { message: 'You were removed from the room by the host.' });
     this.broadcastLobbyUpdate(room);
@@ -255,6 +268,7 @@ export class RoomManager {
     this.touch(room);
     const playerList = Array.from(room.players.values()).map(p => ({
       playerId: p.playerId,
+      sessionToken: p.sessionToken,
       nickname: p.nickname,
       avatar: p.avatar,
       isConnected: p.isConnected,
@@ -266,14 +280,6 @@ export class RoomManager {
       isLocked: room.isLocked,
       players: playerList,
       totalPlayers: playerList.length,
-    });
-
-    this.io.to(room.hostSocketId).emit('host:roster_private', {
-      players: Array.from(room.players.values()).map(p => ({
-        playerId: p.playerId,
-        sessionToken: p.sessionToken,
-        nickname: p.nickname,
-      })),
     });
   }
 
