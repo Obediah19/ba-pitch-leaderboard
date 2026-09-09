@@ -91,7 +91,7 @@ export const JoinRoom: React.FC = () => {
           <span className="text-3xl">🎯</span>
           <h1 className="text-xl font-display font-extrabold text-[var(--color-ink)]">Business Turnaround Challenge</h1>
           <span className="text-[10px] font-bold text-[var(--color-volt-bright)] uppercase tracking-wider">
-            E-Summit • Magefficie • Entrepreneurial Symposium
+            E-Summit • Organized by Magefficie & Entrepreneurial Symposium
           </span>
         </div>
 

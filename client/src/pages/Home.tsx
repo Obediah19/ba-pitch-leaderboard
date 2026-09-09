@@ -53,7 +53,7 @@ export const Home: React.FC = () => {
         >
           <div className="inline-flex items-center gap-2 self-start px-3 py-1 rounded-full bg-[var(--color-volt)]/15 border border-[var(--color-volt)]/30 text-xs font-bold text-[var(--color-volt-bright)]">
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="tracking-wider uppercase">E-Summit • Magefficie • Entrepreneurial Symposium</span>
+            <span className="tracking-wider uppercase">E-Summit • Organized by Magefficie & Entrepreneurial Symposium</span>
           </div>
 
           <h1 className="font-display font-extrabold text-4xl sm:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-[var(--color-ink)]">

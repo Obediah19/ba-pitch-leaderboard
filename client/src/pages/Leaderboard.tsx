@@ -39,7 +39,7 @@ export const Leaderboard: React.FC = () => {
             <h1 className="text-4xl sm:text-6xl font-display font-extrabold text-center">Business Turnaround Challenge</h1>
           </div>
           <span className="text-xs font-extrabold text-[var(--color-volt-bright)] uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
-            E-Summit • Magefficie • Entrepreneurial Symposium
+            E-Summit • Organized by Magefficie & Entrepreneurial Symposium
           </span>
           <span className="text-base font-semibold text-[var(--color-chalk-soft)] mt-1">Live Leaderboard | Room Code: <strong className="text-[var(--color-chalk)]">{roomCode}</strong></span>
         </div>

@@ -208,7 +208,7 @@ export const HostGame: React.FC = () => {
             </span>
             <h1 className="text-2xl font-display font-bold mt-1">{title || 'Business Turnaround Challenge Control'}</h1>
             <span className="text-[10px] font-bold text-[var(--color-volt-bright)] uppercase tracking-wider">
-              E-Summit • Magefficie • Entrepreneurial Symposium
+              E-Summit • Organized by Magefficie & Entrepreneurial Symposium
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-3">

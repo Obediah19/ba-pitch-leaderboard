@@ -35,7 +35,7 @@ export const Navbar: React.FC = () => {
             <div className="flex flex-col">
               <ShinyText text="BUSINESS TURNAROUND CHALLENGE" tone="light" className="text-lg font-display font-extrabold tracking-tight" speed={4} />
               <span className="text-[10px] font-bold text-[var(--color-volt-bright)] uppercase tracking-wider">
-                E-Summit • Magefficie • Entrepreneurial Symposium
+                E-Summit • Organized by Magefficie & Entrepreneurial Symposium
               </span>
             </div>
           </Link>

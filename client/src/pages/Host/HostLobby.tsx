@@ -115,7 +115,7 @@ export const HostLobby: React.FC = () => {
               <span className="font-display font-extrabold text-lg text-[var(--color-chalk)]">{title || 'Business Turnaround Challenge'}</span>
             </div>
             <span className="text-[10px] font-bold text-[var(--color-volt-bright)] uppercase tracking-wider ml-7">
-              E-Summit • Magefficie • Entrepreneurial Symposium
+              E-Summit • Organized by Magefficie & Entrepreneurial Symposium
             </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
