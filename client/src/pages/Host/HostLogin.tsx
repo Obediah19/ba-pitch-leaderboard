@@ -3,10 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext.js';
 import { SpotlightCard } from '../../components/ReactBits/SpotlightCard.js';
-import { Lock, Mail, Key, ShieldCheck, LogIn } from 'lucide-react';
+import { Lock, Mail, Key, LogIn } from 'lucide-react';
 
 export const HostLogin: React.FC = () => {
-  const { login, quickHostLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -31,19 +31,6 @@ export const HostLogin: React.FC = () => {
     }
   };
 
-  const handleQuickLogin = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      await quickHostLogin();
-      navigate(from, { replace: true });
-    } catch (err: any) {
-      setError(err.message || 'Failed to login with default admin credentials');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen w-full bg-[var(--color-paper)] text-[var(--color-ink)] flex items-center justify-center p-6">
       <motion.div
@@ -59,7 +46,7 @@ export const HostLogin: React.FC = () => {
             </div>
             <h1 className="text-2xl font-display font-bold">Admin Portal Access</h1>
             <p className="text-xs font-semibold text-[var(--color-ink-soft)]">
-              Authorized event host authentication only.
+              Authorized event host authentication required.
             </p>
           </div>
 
@@ -72,7 +59,7 @@ export const HostLogin: React.FC = () => {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-ink-soft)] flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5" /> Email Address
+                <Mail className="w-3.5 h-3.5" /> Host Email / ID
               </label>
               <input
                 type="email"
@@ -80,7 +67,7 @@ export const HostLogin: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@arena.edu"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-[var(--color-line)] text-sm font-semibold focus:outline-none focus:border-[var(--color-volt)] transition"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-[var(--color-line)] text-sm font-semibold focus:outline-none focus:border-[var(--color-volt)] transition text-[var(--color-ink)] placeholder:text-white/30"
               />
             </div>
 
@@ -94,7 +81,7 @@ export const HostLogin: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-[var(--color-line)] text-sm font-semibold focus:outline-none focus:border-[var(--color-volt)] transition"
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-[var(--color-line)] text-sm font-semibold focus:outline-none focus:border-[var(--color-volt)] transition text-[var(--color-ink)] placeholder:text-white/30"
               />
             </div>
 
@@ -106,22 +93,9 @@ export const HostLogin: React.FC = () => {
               <LogIn className="w-4 h-4" /> {loading ? 'Authenticating...' : 'Sign In as Host'}
             </button>
           </form>
-
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-[var(--color-line)]"></div>
-            <span className="flex-shrink mx-4 text-xs font-bold uppercase tracking-widest text-[var(--color-ink-faint)]">OR</span>
-            <div className="flex-grow border-t border-[var(--color-line)]"></div>
-          </div>
-
-          <button
-            onClick={handleQuickLogin}
-            disabled={loading}
-            className="w-full py-3 px-4 rounded-xl bg-white/5 border border-[var(--color-line)] hover:bg-white/10 text-xs font-bold uppercase tracking-wider text-[var(--color-ink)] flex items-center justify-center gap-2 transition"
-          >
-            <ShieldCheck className="w-4 h-4 text-[var(--color-volt)]" /> Demo Admin Quick Access
-          </button>
         </SpotlightCard>
       </motion.div>
     </div>
   );
 };
+

@@ -10,7 +10,7 @@ export const Home: React.FC = () => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { user, quickHostLogin } = useAuth();
+  const { user } = useAuth();
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();

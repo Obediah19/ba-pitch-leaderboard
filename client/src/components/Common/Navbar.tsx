@@ -8,7 +8,7 @@ import { ShinyText } from '../ReactBits/ShinyText.js';
 import { Volume2, VolumeX, LogIn, LogOut, LayoutDashboard, Info } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { user, logout, quickHostLogin } = useAuth();
+  const { user, logout } = useAuth();
   const { connected } = useSocket();
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,14 +25,6 @@ export const Navbar: React.FC = () => {
   if (hidden) return null;
 
   const toggleMute = () => setIsMuted(sound.toggleMute());
-  const quickHost = async () => {
-    try {
-      await quickHostLogin();
-      navigate('/host/dashboard');
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   return (
     <>
