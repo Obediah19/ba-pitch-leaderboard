@@ -22,8 +22,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // In dev Vite proxies /socket.io to backend :3001
-    const newSocket = io({
+    const SOCKET_URL = (import.meta as any).env?.VITE_API_URL || undefined;
+    const newSocket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
