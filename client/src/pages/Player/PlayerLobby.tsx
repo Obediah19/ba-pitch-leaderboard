@@ -27,11 +27,18 @@ export const PlayerLobby: React.FC = () => {
       });
     };
     const onGo = () => { sound.playTick(); navigate('/player/game'); };
+    const onSync = (d: any) => {
+      if (d.status === 'POLL_OPEN' || d.activeParticipantId) {
+        onGo();
+      }
+    };
     const onKicked = () => { clearSession(); alert('You were removed from the room.'); navigate('/'); };
 
     socket.on('room:lobby_update', onLobby);
     socket.on('game:countdown', onGo);
     socket.on('game:question_live', onGo);
+    socket.on('game:poll_open', onGo);
+    socket.on('player:sync', onSync);
     socket.on('room:kicked', onKicked);
     socket.emit('room:sync_request', { roomCode: session.roomCode, sessionToken: session.token });
 
@@ -39,6 +46,8 @@ export const PlayerLobby: React.FC = () => {
       socket.off('room:lobby_update', onLobby);
       socket.off('game:countdown', onGo);
       socket.off('game:question_live', onGo);
+      socket.off('game:poll_open', onGo);
+      socket.off('player:sync', onSync);
       socket.off('room:kicked', onKicked);
     };
   }, [socket, session, navigate, clearSession]);
