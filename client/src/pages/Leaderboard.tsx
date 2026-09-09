@@ -33,10 +33,15 @@ export const Leaderboard: React.FC = () => {
   return (
     <Aurora intensity="subtle" className="text-[var(--color-chalk)] overflow-y-auto">
       <div className="flex flex-col min-h-screen p-8 sm:p-16 select-none max-w-7xl mx-auto w-full">
-        <div className="flex flex-col items-center justify-center gap-4 mb-16">
-          <Trophy className="w-16 h-16 text-[var(--color-volt)]" />
-          <h1 className="text-5xl sm:text-6xl font-display font-bold text-center">Live Leaderboard</h1>
-          <span className="text-lg font-semibold text-[var(--color-chalk-soft)]">Room Code: <strong className="text-[var(--color-chalk)]">{roomCode}</strong></span>
+        <div className="flex flex-col items-center justify-center gap-3 mb-12 text-center">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-12 h-12 text-[var(--color-volt)]" />
+            <h1 className="text-4xl sm:text-6xl font-display font-extrabold text-center">Business Turnaround Challenge</h1>
+          </div>
+          <span className="text-xs font-extrabold text-[var(--color-volt-bright)] uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-full border border-white/10">
+            E-Summit • Magefficie • Entrepreneurial Symposium
+          </span>
+          <span className="text-base font-semibold text-[var(--color-chalk-soft)] mt-1">Live Leaderboard | Room Code: <strong className="text-[var(--color-chalk)]">{roomCode}</strong></span>
         </div>
 
         <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto">

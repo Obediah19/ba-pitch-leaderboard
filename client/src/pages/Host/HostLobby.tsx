@@ -22,6 +22,7 @@ export const HostLobby: React.FC = () => {
   const joinUrl = `${window.location.origin}/join/${raw}`;
 
   const [players, setPlayers] = useState<any[]>([]);
+  const [pitchTeams, setPitchTeams] = useState<any[]>([]);
   const [title, setTitle] = useState('');
   const [copied, setCopied] = useState(false);
   const [music, setMusic] = useState(false);
@@ -41,13 +42,21 @@ export const HostLobby: React.FC = () => {
         return d.players || [];
       });
       if (d.title) setTitle(d.title);
+      if (d.participants) setPitchTeams(d.participants);
     };
+
+    const onParticipantsUpdated = (d: any) => {
+      if (d.participants) setPitchTeams(d.participants);
+    };
+
     const onGo = () => { sound.stopLobbyMusic(); navigate(`/host/game/${raw}`); };
 
     socket.on('room:lobby_update', onLobby);
+    socket.on('host:participants_updated', onParticipantsUpdated);
     socket.on('game:countdown', onGo);
     return () => {
       socket.off('room:lobby_update', onLobby);
+      socket.off('host:participants_updated', onParticipantsUpdated);
       socket.off('game:countdown', onGo);
       sound.stopLobbyMusic();
     };
@@ -57,10 +66,15 @@ export const HostLobby: React.FC = () => {
     if (music) { sound.stopLobbyMusic(); setMusic(false); }
     else { sound.startLobbyMusic(); setMusic(true); }
   };
+
   const start = () => {
     sound.stopLobbyMusic();
+    if (pitchTeams.length === 0) {
+      alert('Please add at least 1 pitch team entry before starting live polling! Directing you to the Pitch Control Admin Panel.');
+    }
     navigate(`/host/game/${raw}`);
   };
+
   const copy = () => {
     navigator.clipboard.writeText(joinUrl);
     setCopied(true);
@@ -88,18 +102,30 @@ export const HostLobby: React.FC = () => {
   };
 
   return (
-    <Aurora intensity="subtle" className="text-[var(--color-chalk)]">
+    <Aurora intensity="subtle" className="text-[var(--color-chalk)] overflow-y-auto min-h-screen">
       <EmojiLayer />
       <EmojiStorm />
 
       <div className="flex flex-col justify-between min-h-screen p-6 sm:p-12 select-none">
         {/* top bar */}
-        <div className="max-w-5xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🎯</span>
-            <span className="font-display font-semibold text-lg text-[var(--color-chalk)]/90">{title || 'Pitch Competition'}</span>
+        <div className="max-w-6xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🎯</span>
+              <span className="font-display font-extrabold text-lg text-[var(--color-chalk)]">{title || 'Business Turnaround Challenge'}</span>
+            </div>
+            <span className="text-[10px] font-bold text-[var(--color-volt-bright)] uppercase tracking-wider ml-7">
+              E-Summit • Magefficie • Entrepreneurial Symposium
+            </span>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
+            <button
+              onClick={() => navigate(`/host/game/${raw}`)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-bold text-white transition shadow-lg"
+              title="Open Admin Pitch Control Panel"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Pitch Control Panel
+            </button>
             <button
               onClick={() => setShowAddModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--color-volt)] hover:bg-[var(--color-volt)]/80 text-xs font-bold text-white transition shadow-lg"
@@ -126,7 +152,7 @@ export const HostLobby: React.FC = () => {
         </div>
 
         {/* hero */}
-        <div className="max-w-4xl mx-auto w-full flex flex-col items-center gap-12 my-auto">
+        <div className="max-w-4xl mx-auto w-full flex flex-col items-center gap-10 my-auto py-8">
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-14">
             <div className="flex flex-col items-center md:items-start text-center md:text-left">
               <span className="eyebrow text-[var(--color-chalk-faint)] mb-2">
@@ -144,13 +170,46 @@ export const HostLobby: React.FC = () => {
             </div>
           </div>
 
+          {/* Registered Pitch Teams Section */}
+          <div className="w-full max-w-2xl bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-chalk-soft)] flex items-center gap-2">
+                <Plus className="w-4 h-4 text-[var(--color-volt)]" /> Registered Pitch Teams ({pitchTeams.length})
+              </span>
+              <button
+                onClick={() => navigate(`/host/game/${raw}`)}
+                className="text-xs text-[var(--color-volt-bright)] hover:underline font-bold"
+              >
+                Manage Pitches →
+              </button>
+            </div>
+            {pitchTeams.length === 0 ? (
+              <p className="text-xs font-semibold text-[var(--color-chalk-faint)]">
+                No pitch teams added yet. Click <strong className="text-white">"Pitch Control Panel"</strong> or <strong className="text-white">"+ Add Pitch / Team"</strong> above to add entries.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2 pt-1 max-h-36 overflow-y-auto">
+                {pitchTeams.map((pt, i) => (
+                  <div
+                    key={pt.id || i}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-bold text-white"
+                  >
+                    <span className="text-[var(--color-volt-bright)]">{i + 1}.</span>
+                    <span>{pt.name}</span>
+                    {pt.productIdea && <span className="text-[var(--color-chalk-faint)] font-normal">({pt.productIdea})</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="w-full flex flex-col items-center gap-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--color-chalk-soft)]">
               <Users className="w-4 h-4 text-[var(--color-volt-bright)]" />
               <CountUp to={players.length} duration={0.5} /> {players.length === 1 ? 'player' : 'players'} joined
             </div>
             {players.length === 0 ? (
-              <p className="py-8 text-[var(--color-chalk-faint)] font-semibold text-sm">Waiting for players to enter the code… (You can start anytime!)</p>
+              <p className="py-4 text-[var(--color-chalk-faint)] font-semibold text-sm">Waiting for players to enter the code… (You can start anytime!)</p>
             ) : (
               <div className="flex flex-wrap justify-center gap-5 max-w-3xl max-h-64 overflow-y-auto p-2">
                 <AnimatePresence>

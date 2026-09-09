@@ -87,9 +87,12 @@ export const JoinRoom: React.FC = () => {
         initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
         className="w-full max-w-sm card-paper p-6 sm:p-8 flex flex-col items-center"
       >
-        <div className="flex flex-col items-center gap-1 mb-6">
+        <div className="flex flex-col items-center text-center gap-1 mb-6">
           <span className="text-3xl">🎯</span>
-          <h1 className="text-2xl font-display font-bold text-[var(--color-ink)]">Join the arena</h1>
+          <h1 className="text-xl font-display font-extrabold text-[var(--color-ink)]">Business Turnaround Challenge</h1>
+          <span className="text-[10px] font-bold text-[var(--color-volt-bright)] uppercase tracking-wider">
+            E-Summit • Magefficie • Entrepreneurial Symposium
+          </span>
         </div>
 
         <form onSubmit={submit} className="w-full flex flex-col items-center gap-5">

@@ -30,9 +30,14 @@ export const Navbar: React.FC = () => {
     <>
       <header className="w-full border-b border-[var(--color-line)] bg-[var(--color-paper)] px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-3 group">
             <span className="text-xl">🎯</span>
-            <ShinyText text="ARENA" tone="light" className="text-2xl tracking-tight" speed={4} />
+            <div className="flex flex-col">
+              <ShinyText text="BUSINESS TURNAROUND CHALLENGE" tone="light" className="text-lg font-display font-extrabold tracking-tight" speed={4} />
+              <span className="text-[10px] font-bold text-[var(--color-volt-bright)] uppercase tracking-wider">
+                E-Summit • Magefficie • Entrepreneurial Symposium
+              </span>
+            </div>
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">

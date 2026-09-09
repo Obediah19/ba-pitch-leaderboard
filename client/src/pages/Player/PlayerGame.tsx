@@ -242,7 +242,7 @@ export const PlayerGame: React.FC = () => {
       {/* footer */}
       <div className="w-full flex items-center justify-between pt-4 mt-4 border-t border-[var(--color-line)] text-xs font-semibold text-[var(--color-ink-faint)] shrink-0">
         <span>{session.nickname}</span>
-        <span className="tabular">Pitch Competition</span>
+        <span className="tabular font-bold text-[var(--color-volt-bright)]">Business Turnaround Challenge</span>
       </div>
     </div>
   );

@@ -58,6 +58,7 @@ export const HostGame: React.FC = () => {
 
   // Timer state per participant
   const [selectedTimers, setSelectedTimers] = useState<{ [id: string]: number }>({});
+  const [customTimers, setCustomTimers] = useState<{ [id: string]: string }>({});
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [totalTimerSeconds, setTotalTimerSeconds] = useState(0);
 
@@ -81,6 +82,7 @@ export const HostGame: React.FC = () => {
 
     const onLobbyUpdate = (d: any) => {
       setVoters(d.players || []);
+      if (d.title) setTitle(d.title);
     };
 
     const onParticipantsUpdated = (d: any) => {
@@ -136,7 +138,11 @@ export const HostGame: React.FC = () => {
   }, [socket, roomCode]);
 
   const openPoll = (id: string) => {
-    const timerSec = selectedTimers[id] !== undefined ? selectedTimers[id] : 30; // default 30s
+    let timerSec = selectedTimers[id] !== undefined ? selectedTimers[id] : 30; // default 30s
+    if (timerSec === -1) {
+      const customVal = parseInt(customTimers[id] || '30', 10);
+      timerSec = !isNaN(customVal) && customVal >= 0 ? customVal : 30;
+    }
     socket?.emit('host:open_poll', { roomCode, participantId: id, durationSeconds: timerSec });
     setActivePoll(id);
     setPollStatus('OPEN');
@@ -200,9 +206,19 @@ export const HostGame: React.FC = () => {
             <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/10 text-[var(--color-chalk-soft)] w-max">
               ROOM CODE: {roomCode}
             </span>
-            <h1 className="text-2xl font-display font-bold mt-1">{title || 'Pitch Competition Control'}</h1>
+            <h1 className="text-2xl font-display font-bold mt-1">{title || 'Business Turnaround Challenge Control'}</h1>
+            <span className="text-[10px] font-bold text-[var(--color-volt-bright)] uppercase tracking-wider">
+              E-Summit • Magefficie • Entrepreneurial Symposium
+            </span>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => navigate(`/host/lobby/${roomCode}`)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-sm font-semibold transition text-white shadow-lg"
+              title="Show QR Code & Room Join Screen"
+            >
+              📺 Room Join Screen
+            </button>
             <button
               onClick={() => setShowAddModal(true)}
               className="btn-volt flex items-center gap-2 px-4 py-2 text-sm font-bold shadow-lg"
@@ -215,7 +231,7 @@ export const HostGame: React.FC = () => {
               rel="noreferrer"
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-sm font-semibold transition"
             >
-              <ExternalLink className="w-4 h-4" /> Live Leaderboard
+              <ExternalLink className="w-4 h-4 text-[var(--color-volt)]" /> Live Leaderboard
             </a>
             <button
               onClick={() => navigate('/host/dashboard')}
@@ -276,6 +292,8 @@ export const HostGame: React.FC = () => {
                 ? (p.score / p.voteCount).toFixed(2)
                 : '0.00';
 
+            const currentTimerVal = selectedTimers[p.id] !== undefined ? selectedTimers[p.id] : 30;
+
             return (
               <div
                 key={p.id}
@@ -319,24 +337,42 @@ export const HostGame: React.FC = () => {
 
                 <div className="flex flex-col gap-3 w-full sm:w-auto shrink-0">
                   {!isVoting && (
-                    <div className="flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/10 text-xs">
-                      <Clock className="w-4 h-4 text-[var(--color-volt)]" />
-                      <span className="font-bold text-[var(--color-chalk-soft)]">Timer:</span>
-                      <select
-                        value={selectedTimers[p.id] !== undefined ? selectedTimers[p.id] : 30}
-                        onChange={(e) =>
-                          setSelectedTimers((prev) => ({ ...prev, [p.id]: parseInt(e.target.value, 10) }))
-                        }
-                        className="bg-transparent font-bold text-white focus:outline-none cursor-pointer"
-                      >
-                        <option value={0} className="bg-gray-900 text-white">No Limit</option>
-                        <option value={15} className="bg-gray-900 text-white">15 seconds</option>
-                        <option value={30} className="bg-gray-900 text-white">30 seconds</option>
-                        <option value={45} className="bg-gray-900 text-white">45 seconds</option>
-                        <option value={60} className="bg-gray-900 text-white">60 seconds</option>
-                        <option value={90} className="bg-gray-900 text-white">90 seconds</option>
-                        <option value={120} className="bg-gray-900 text-white">120 seconds</option>
-                      </select>
+                    <div className="flex flex-col gap-1.5 bg-white/5 p-2.5 rounded-xl border border-white/10 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-[var(--color-volt)]" />
+                        <span className="font-bold text-[var(--color-chalk-soft)]">Timer:</span>
+                        <select
+                          value={currentTimerVal}
+                          onChange={(e) =>
+                            setSelectedTimers((prev) => ({ ...prev, [p.id]: parseInt(e.target.value, 10) }))
+                          }
+                          className="bg-transparent font-bold text-white focus:outline-none cursor-pointer"
+                        >
+                          <option value={0} className="bg-gray-900 text-white">No Limit</option>
+                          <option value={15} className="bg-gray-900 text-white">15 seconds</option>
+                          <option value={30} className="bg-gray-900 text-white">30 seconds</option>
+                          <option value={45} className="bg-gray-900 text-white">45 seconds</option>
+                          <option value={60} className="bg-gray-900 text-white">60 seconds</option>
+                          <option value={90} className="bg-gray-900 text-white">90 seconds</option>
+                          <option value={120} className="bg-gray-900 text-white">120 seconds</option>
+                          <option value={-1} className="bg-gray-900 text-white">⚙️ Custom Sec...</option>
+                        </select>
+                      </div>
+
+                      {currentTimerVal === -1 && (
+                        <div className="flex items-center gap-1.5 pt-1">
+                          <span className="text-[10px] font-bold text-[var(--color-chalk-faint)]">Sec:</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="3600"
+                            placeholder="e.g. 25"
+                            value={customTimers[p.id] || ''}
+                            onChange={(e) => setCustomTimers((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                            className="w-20 bg-white/10 border border-white/20 rounded px-2 py-1 text-xs font-mono font-bold text-white focus:border-[var(--color-volt)] outline-none"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
 

@@ -63,10 +63,6 @@ export const QuizEditor: React.FC = () => {
   };
 
   const removeParticipant = (index: number) => {
-    if (participants.length <= 1) {
-      alert('A pitch competition needs at least one participant!');
-      return;
-    }
     setParticipants(participants.filter((_, i) => i !== index));
   };
 
@@ -87,10 +83,6 @@ export const QuizEditor: React.FC = () => {
     }
 
     const validParticipants = participants.filter((p) => p.name.trim().length > 0);
-    if (validParticipants.length === 0) {
-      alert('Please add at least one participant with a name.');
-      return;
-    }
 
     setSaving(true);
     try {

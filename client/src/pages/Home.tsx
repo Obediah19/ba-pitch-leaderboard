@@ -53,16 +53,16 @@ export const Home: React.FC = () => {
         >
           <div className="inline-flex items-center gap-2 self-start px-3 py-1 rounded-full bg-[var(--color-volt)]/15 border border-[var(--color-volt)]/30 text-xs font-bold text-[var(--color-volt-bright)]">
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="tracking-wider uppercase">Live Audience Quiz Arena</span>
+            <span className="tracking-wider uppercase">E-Summit • Magefficie • Entrepreneurial Symposium</span>
           </div>
 
           <h1 className="font-display font-extrabold text-4xl sm:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-[var(--color-ink)]">
-            Play the room,<br />
-            <span className="gradient-text">not the slides.</span>
+            Business Turnaround<br />
+            <span className="gradient-text">Challenge.</span>
           </h1>
 
           <p className="text-[var(--color-ink-soft)] text-base sm:text-lg max-w-lg leading-relaxed font-normal">
-            Real-time interactive quiz tournaments engineered for college events, conferences, and keynotes. Host seamlessly on the big screen while everyone plays from their phone.
+            Official live pitch evaluation & audience voting portal for the Business Turnaround Challenge at E-Summit, organized by Magefficie and Entrepreneurial Symposium.
           </p>
 
           <div className="flex flex-wrap items-center gap-6 pt-2 text-sm text-[var(--color-ink-soft)] font-medium">
