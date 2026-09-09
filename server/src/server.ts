@@ -35,6 +35,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
+app.get('/', (req, res) => {
+  res.send('⚡ Arena Pitch Competition Backend Server is Active & Healthy!');
+});
+
 // Initialize Socket.IO with WebSocket + polling transports
 const io = new SocketIOServer(server, {
   cors: {
